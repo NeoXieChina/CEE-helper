@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="icon" href="/logo.png">
+    <title>四川高考招生信息查询平台</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #2c7bb6;
+            --secondary: #d32f2f;
+            --accent: #ff9800;
+            --light: #f5f7fa;
+            --dark: #1e3a5f;
+            --success: #4caf50;
+            --timeline-color: #673ab7;
+            --notice-color: #e91e63;
+            --card-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd 0%, #f5f5f5 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(90deg, var(--dark) 0%, var(--primary) 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .header h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+        .card-header {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--dark) 100%);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .card-body {
+            padding: 1.5rem;
+            flex-grow: 1;
+        }
+        .btn-group {
+            display: grid;
+            gap: 0.8rem;
+        }
+        .btn {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.9rem 1.2rem;
+            background: var(--light);
+            border-radius: 8px;
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            border: 1px solid #e0e0e0;
+        }
+        .btn:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateX(5px);
+        }
+        .btn i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        .btn-2024 {
+            background: rgba(33, 150, 243, 0.1);
+            border-color: rgba(33, 150, 243, 0.3);
+        }
+        .btn-2025 {
+            background: rgba(255, 152, 0, 0.1);
+            border-color: rgba(255, 152, 0, 0.3);
+        }
+        .footer {
+            background: var(--dark);
+            color: rgba(255,255,255,0.8);
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto;
+            font-size: 0.9rem;
+        }
+        .sync-info {
+            background: var(--success);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            display: inline-block;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .search-box {
+            max-width: 600px;
+            margin: 1.5rem auto;
+            padding: 0 1rem;
+            width: 100%;
+        }
+        .search-container {
+            position: relative;
+            display: flex;
+        }
+        .search-input {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            padding-left: 3rem;
+            border: none;
+            border-radius: 50px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            font-size: 1rem;
+            outline: none;
+        }
+        .search-icon {
+            position: absolute;
+            left: 1.2rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+        }
+        .page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: rgba(44, 123, 182, 0.3);
+            display: none;
+            z-index: 9999;
+        }
+        .page-loader::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            height: 100%;
+            width: 50%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            animation: loading 1s infinite;
+        }
+        @keyframes loading {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(200%); }
+        }
+        
+        /* 时间轴样式 - 优化多栏布局 */
+        .timeline-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem 2rem;
+            width: 100%;
+        }
+        .timeline-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+        }
+        .timeline-header {
+            background: linear-gradient(90deg, var(--timeline-color) 0%, #512da8 100%);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .timeline-content {
+            padding: 1.5rem;
+        }
+        
+        /* 时间轴多列布局 */
+        .timeline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .timeline-item {
+            background: rgba(103, 58, 183, 0.05);
+            border-radius: 10px;
+            padding: 1.2rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            border-left: 4px solid var(--timeline-color);
+        }
+        .timeline-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(103, 58, 183, 0.15);
+            background: rgba(103, 58, 183, 0.08);
+        }
+        .timeline-date {
+            background: var(--timeline-color);
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 0.8rem;
+        }
+        .timeline-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+            font-size: 1.05rem;
+        }
+        .timeline-desc {
+            color: #555;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        /* 注意事项样式 */
+        .notice-card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+        .notice-header {
+            background: linear-gradient(90deg, var(--notice-color) 0%, #c2185b 100%);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+        .notice-content {
+            padding: 1.5rem;
+        }
+        .notice-content p {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+            line-height: 1.7;
+        }
+        .notice-content p:last-child {
+            margin-bottom: 0;
+        }
+        .notice-content p::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            top: 0;
+            color: var(--notice-color);
+            font-size: 1.2rem;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+                padding: 1.5rem 1rem;
+                gap: 1.2rem;
+            }
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            .btn {
+                padding: 0.8rem 1rem;
+            }
+            .card-body {
+                padding: 1.2rem;
+            }
+            .timeline-container {
+                padding: 0 1rem 1.5rem;
+            }
+            .timeline-content, .notice-content {
+                padding: 1.2rem;
+            }
+        }
+        @media (max-width: 480px) {
+            .header {
+                padding: 1.2rem 1rem;
+            }
+            .header h1 {
+                font-size: 1.3rem;
+            }
+            .search-input {
+                padding: 0.8rem 1rem;
+                padding-left: 2.8rem;
+            }
+            .btn {
+                font-size: 0.9rem;
+            }
+            .timeline-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* 大屏幕优化 */
+        @media (min-width: 1200px) {
+            .timeline-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+        @media (min-width: 992px) and (max-width: 1199px) {
+            .timeline-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-loader"></div>
+    <header class="header">
+        <h1><i class="fas fa-graduation-cap"></i> 四川高考招生信息查询平台</h1>
+        <p>权威高考数据平台 · 一站式招生信息服务 · 专业指导</p>
+    </header>
+    <div class="search-box">
+        <div class="search-container">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="搜索招生计划、成绩查询、志愿填报等入口...">
+        </div>
+    </div>
+    <div class="container">
+        <!-- 核心服务 -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-star"></i>
+                <span>核心服务</span>
+            </div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <a href="https://yfyd.sceeic.cn/#/" class="btn btn-2024">
+                        <i class="fas fa-chart-line"></i>
+                        一分一段表查询
+                    </a>
+                    <a href="https://dwf.sceeic.cn/#/" class="btn btn-2024">
+                        <i class="fas fa-balance-scale"></i>
+                        等位分查询
+                    </a>
+                    <a href="https://cx.sceea.cn/html/XGKCJ.htm" class="btn btn-2024">
+                        <i class="fas fa-search"></i>
+                        高考成绩查询
+                    </a>
+                    <a href="yfyd/index.php" class="btn btn-2024">
+                        <i class="fas fa-sort-amount-down"></i>历年一分一段查询
+                    </a>
+                    <a href="pcx/index.html" class="btn btn-2024">
+                        <i class="fas fa-history"></i>历年批次线查询
+                    </a>
+                    <a href="history-score/index.php" class="btn btn-2024">
+                        <i class="fas fa-code"></i>历年专业分数查询
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 志愿填报 -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-edit"></i>
+                <span>报名与志愿填报系统</span>
+            </div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <a href="https://zyfz.sceeic.cn/yuanxiao" class="btn btn-2025">
+                        <i class="fas fa-graduation-cap"></i>
+                        四川省新高考志愿填报辅助系统
+                    </a>
+                    <a href="https://aifz.sceeic.cn/" class="btn btn-2025">
+                        <i class="fas fa-robot"></i>
+                        招生考试报高考志愿填报AI辅助系统
+                    </a>
+                    <a href="https://gkzy.sceea.cn/" class="btn btn-2025">
+                        <i class="fas fa-pen"></i>
+                        四川省普通高考志愿填报系统
+                    </a>
+                    <a href="https://gkbm.sceea.cn/" class="btn btn-2025">
+                        <i class="fas fa-user-edit"></i>
+                        高考报名系统
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 招生计划 -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-calendar-alt"></i>
+                <span>官方招生计划</span>
+            </div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <a href="https://plan.sceea.cn/" class="btn btn-2024">
+                        <i class="fas fa-file-alt"></i>最新四川省招生计划
+                    </a>
+                    <a href="https://www.sceeic.cn/html/2025zhuanti/2025jihua/" class="btn btn-2024">
+                        <i class="fas fa-calendar-check"></i>2025四川省招生计划
+                    </a>
+                    <a href="https://www.sceeic.cn/html/2024zhuanti/2024jihua/" class="btn btn-2024">
+                        <i class="fas fa-calendar-check"></i>2024四川省招生计划
+                    </a>
+                    <a href="https://www.sceeic.cn/html/2023zhuanti/2023jihua/" class="btn btn-2024">
+                        <i class="fas fa-calendar-check"></i>2023四川省招生计划
+                    </a>
+                    <a href="https://www.sceeic.cn/html/2022zhuanti/2022jihua/" class="btn btn-2024">
+                        <i class="fas fa-calendar-check"></i>2022四川省招生计划
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 招生计划 -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-calendar-alt"></i>
+                <span>同步招生计划</span>
+            </div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <a href="plan/2024/index.html" class="btn btn-2024">
+                        <i class="fas fa-file-download"></i>2024四川省招生计划（离线）
+                    </a>
+                    <a href="plan/2024/changes.html" class="btn btn-2024">
+                        <i class="fas fa-exclamation-circle"></i>2024四川省招生计划更正通知
+                    </a>
+                    <a href="plan/2025/index.html" class="btn btn-2025">
+                        <i class="fas fa-clock"></i>2025四川省招生计划（暂无）
+                    </a>
+                    <a href="plan/2025/changes.html" class="btn btn-2025">
+                        <i class="fas fa-bell"></i>2025四川省招生计划更正通知
+                    </a>
+                    <a href="zsjh/index.html" class="btn btn-2025">
+                        <i class="fas fa-list-ol"></i>2025招生计划汇总
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 招生资料 -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-book"></i>
+                <span>招生资料</span>
+            </div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <a href="zszc/index.html" class="btn btn-2025">
+                        <i class="fas fa-file-alt"></i>2025年招生章程汇总
+                    </a>
+                    <a href="zszc/min/" class="btn btn-2025">
+                        <i class="fas fa-file-contract"></i>招生章程总结
+                    </a>
+                    <a href="zyxx/index.html" class="btn btn-2025">
+                        <i class="fas fa-graduation-cap"></i>专业解读
+                    </a>
+                    <a href="yxdm/index.php" class="btn btn-2025">
+                        <i class="fas fa-university"></i>院校代码查询
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- 外部资源 -->
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-external-link-alt"></i>
+                <span>外部资源</span>
+            </div>
+            <div class="card-body">
+                <div class="btn-group">
+                    <a href="https://gaokao.chsi.com.cn/zsgs/zhangcheng/listVerifedZszc--method-index,lb-1.dhtml" class="btn btn-2025">
+                        <i class="fas fa-sun"></i>
+                        阳光高考-招生章程
+                    </a>
+                    <a href="https://gaokao.chsi.com.cn/gkzt/zbft" class="btn btn-2025">
+                        <i class="fas fa-sun"></i>
+                        阳光高考-招办访谈
+                    </a>
+                    <a href="https://www.zk789.net/" class="btn btn-2025">
+                        <i class="fas fa-info-circle"></i>
+                        四川招生考试信息资讯
+                    </a>
+                    <a href="https://www.yunzhaokao.org.cn/" class="btn btn-2025">
+                        <i class="fas fa-cloud"></i>
+                        云招考
+                    </a>
+                    <a href="files.php" class="btn btn-2025">
+                        <i class="fas fa-file-upload"></i>使用在线文件传输工具
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 优化后的时间轴和注意事项部分 -->
+    <div class="timeline-container">
+        <div class="timeline-card">
+            <div class="timeline-header">
+                <i class="fas fa-calendar-alt"></i>
+                <span>2025年四川高考重要时间轴</span>
+            </div>
+            <div class="timeline-content">
+                <div class="timeline-grid">
+                    <div class="timeline-item">
+                        <div class="timeline-date">6月25日18:30</div>
+                        <div class="timeline-title">高考成绩查询开通</div>
+                        <div class="timeline-desc">考生可通过官网查询高考成绩</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">6月25日20:00</div>
+                        <div class="timeline-title">一分一段表查询开通</div>
+                        <div class="timeline-desc">考生可查询自己在全省考生中的分数排名</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">6月25日20:00</div>
+                        <div class="timeline-title">等位分查询开通</div>
+                        <div class="timeline-desc">提供分数换算和位次转换服务</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">6月25日21:00</div>
+                        <div class="timeline-title">普通类考生填报志愿</div>
+                        <div class="timeline-desc">普通类考生开始填报本科提前批志愿</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">6月26日9:00</div>
+                        <div class="timeline-title">四川省新高考志愿填报辅助系统开通</div>
+                        <div class="timeline-desc">官方志愿填报辅助工具上线</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">6月26日9:00</div>
+                        <div class="timeline-title">招生考试报高考志愿填报AI辅助系统开通</div>
+                        <div class="timeline-desc">AI智能辅助志愿填报系统上线</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">6月27日12:00</div>
+                        <div class="timeline-title">申请成绩复核登记截止</div>
+                        <div class="timeline-desc">考生申请成绩复核的最后期限</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">6月28日17:00</div>
+                        <div class="timeline-title">本科提前批次志愿填报截止</div>
+                        <div class="timeline-desc">特殊类型招生志愿填报结束</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">7月1日17:00</div>
+                        <div class="timeline-title">其余本科志愿填报截止</div>
+                        <div class="timeline-desc">所有本科批次志愿填报结束</div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-date">7月5日17:00</div>
+                        <div class="timeline-title">专科志愿填报截止</div>
+                        <div class="timeline-desc">专科批次志愿填报结束</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="notice-card">
+            <div class="notice-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>重要注意事项</span>
+            </div>
+            <div class="notice-content">
+                <p>已录取考生的纸质档案，可由考生凭高校录取通知书到高考报名的县级招生考试机构领取，入学报到时自行带到高校（在职考生到县级招生考试机构确认后，由县级招生考试机构寄发高校），或由市、县招生考试机构按照录取库统一寄发，具体办法由各市（州）自行确定。</p>
+                <p>考生收到录取通知书后，应及时通过省教育考试院或高校指定的信息发布渠道进行核实和确认。考生凭录取通知书可办理户口迁移手续，并按高校规定的时间及有关要求，办理报到等手续。不能按时报到的已录取考生，应在高校规定时间内提出书面申请，经同意方可延期报到。</p>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="footer">
+        <p>专业指导 · 高考招生信息平台</p>
+        <div class="sync-info">
+            <i class="fas fa-sync-alt"></i> 2025年6月11日 雷欧 同步成功
+        </div>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 绑定所有链接的点击事件
+            document.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    document.querySelector('.page-loader').style.display = 'block';
+                });
+            });
+            // 搜索功能
+            const searchInput = document.querySelector('.search-input');
+            if(searchInput) {
+                searchInput.addEventListener('keyup', function(e) {
+                    if(e.key === 'Enter') {
+                        const searchTerm = searchInput.value.toLowerCase();
+                        filterCards(searchTerm);
+                    }
+                });
+            }
+            function filterCards(term) {
+                const cards = document.querySelectorAll('.card');
+                cards.forEach(card => {
+                    const cardTitle = card.querySelector('.card-header').textContent.toLowerCase();
+                    const buttons = card.querySelectorAll('.btn');
+                    let hasMatch = cardTitle.includes(term);
+                    if(!hasMatch) {
+                        buttons.forEach(btn => {
+                            if(btn.textContent.toLowerCase().includes(term)) {
+                                hasMatch = true;
+                            }
+                        });
+                    }
+                    card.style.display = hasMatch ? 'flex' : 'none';
+                });
+            }
+            
+            // 时间轴动画效果
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            timelineItems.forEach(item => {
+                item.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-5px)';
+                });
+                item.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
